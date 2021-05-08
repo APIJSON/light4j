@@ -24,6 +24,8 @@ JVM_OPS="$JVM_OPS -Duser.timezone=GMT+8 -DclientThreads=1"
 #ENV_OPS="$ENV_OPS enableHttp=false httpPort=8080"
 ENV_OPS="$ENV_OPS enableHttps=true httpsPort=8443"
 ENV_OPS="$ENV_OPS ioThreads=2 workerThreads=3"
+JVM_OPS="$JVM_OPS -Dlight-config-server-uri=https://git.xlongwei.com"
+ENV_OPS="$ENV_OPS config_server_authorization=Z3Vlc3Q6MTIzNDU2"
 #ENV_OPS="$ENV_OPS enableRegistry=true STATUS_HOST_IP=api.xlongwei.com"
 
 usage(){
@@ -134,8 +136,8 @@ install(){
 	install_file "$repos" "com.lowagie" "itext" "2.0.8.1"
 	install_file "$repos" "com.lowagie" "itext-asian" "2.0.8.1"
 	repos=https://jitpack.io/
-	install_file "$repos" "com.github.APIJSON" "apijson-framework" "4.6.0"
-	install_file "$repos" "com.github.tencent" "APIJSON" "4.6.0"
+	install_file "$repos" "com.github.APIJSON" "apijson-framework" "4.6.7"
+	install_file "$repos" "com.github.tencent" "APIJSON" "4.6.7"
 }
 install_file(){
     groupId="$2" && artifactId="$3" && version="$4" && url="$1${groupId//.//}/${artifactId}/${version}/${artifactId}-${version}"

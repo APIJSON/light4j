@@ -12,6 +12,8 @@ import com.xlongwei.light4j.handler.ServiceHandler.AbstractHandler;
 import com.xlongwei.light4j.util.HandlerUtil;
 import com.xlongwei.light4j.util.JsonUtil;
 
+import org.apache.commons.lang3.ArrayUtils;
+
 import apijson.framework.APIJSONSQLExecutor;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.Headers;
@@ -21,6 +23,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class ApijsonHandler extends AbstractHandler {
 	private static final DemoController apijson = DemoApplication.apijson;
+	private static final String[] ALLOW_EMPTY_BODY_METHODS = {"logout", "method_list"};
 	
 	@Override
 	public void handleRequest(HttpServerExchange exchange) throws Exception {
@@ -33,7 +36,7 @@ public class ApijsonHandler extends AbstractHandler {
 	}
 
 	public static void apijson(String path, String request, HttpServerExchange exchange) throws Exception {
-		if(StringUtils.isBlank(path) || (StringUtils.isBlank(request) && !"logout".equals(path))) {
+		if(StringUtils.isBlank(path) || (StringUtils.isBlank(request) && !ArrayUtils.contains(ALLOW_EMPTY_BODY_METHODS, path))) {
 			HandlerUtil.setResp(exchange, Collections.singletonMap("error", StringUtils.isBlank(path) ? "apijson/{path} is required" : "body is required"));
 			return;
 		}
@@ -57,13 +60,15 @@ public class ApijsonHandler extends AbstractHandler {
 		case "register": json = apijson.register(request).toJSONString(); break;
 		case "putPassword": json = apijson.putPassword(request).toJSONString(); break;
 		case "putBalance": json = apijson.putBalance(request, session).toJSONString(); break;
+		case "method_list": json = apijson.listMethod(request).toJSONString(); break;
+		case "method_invoke": json = apijson.invokeMethod(request).toJSONString(); break;
 		default: 
 			HandlerUtil.setResp(exchange, Collections.singletonMap("error", "apijson/"+path+" not supported"));
 			return;
 		}
 		//全局监控apijson是否有连接泄露，apijson不抛异常出来因此这里不必try-finally
 		if(APIJSONSQLExecutor.borrowedConnections.get() > borrowedConnections) {
-			log.error("apijson connection leak, path={} borrowedConnections={} -> {}", path, borrowedConnections, APIJSONSQLExecutor.borrowedConnections);
+			log.error("apijson connection leak, path={} borrowedConnections={} -> {}", path, borrowedConnections, APIJSONSQLExecutor.borrowedConnections.get());
 			try{
 				APIJSONSQLExecutor.threadConnection.get().close();
 				log.info("apijson connection release, returned to {}", APIJSONSQLExecutor.borrowedConnections.decrementAndGet());
@@ -83,7 +88,7 @@ public class ApijsonHandler extends AbstractHandler {
 			}
 			exchange.getResponseHeaders().add(Headers.CONTENT_TYPE, HandlerUtil.MIMETYPE_JSON);
 			exchange.setStatusCode(200);
-			log.info("res({}): {}", (System.nanoTime()-exchange.getRequestStartTime())/1000, response);
+			log.info("res({}): {}", HandlerUtil.requestTime(exchange), response);
 			exchange.getResponseSender().send(response);
 		}
 	}

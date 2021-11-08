@@ -14,6 +14,7 @@ import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 
 import com.networknt.cors.CorsUtil;
+import com.xlongwei.light4j.util.HandlerUtil;
 
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.HeaderMap;
@@ -40,6 +41,7 @@ public class MyCorsHttpHandler extends DummyMiddlewareHandler {
             }
             setCorsResponseHeaders(exchange);
         }
+        HandlerUtil.requestStartTime(exchange);
         super.handleRequest(exchange);
 	}
 
@@ -47,9 +49,9 @@ public class MyCorsHttpHandler extends DummyMiddlewareHandler {
     	HeaderMap requestHeaders = exchange.getRequestHeaders();
         HeaderMap responseHeaders = exchange.getResponseHeaders();
         if (requestHeaders.contains(Headers.ORIGIN)) {
-        	responseHeaders.add(ACCESS_CONTROL_ALLOW_ORIGIN, "*");
+        	// responseHeaders.add(ACCESS_CONTROL_ALLOW_ORIGIN, "*");
 //            if(CorsUtil.matchOrigin(exchange, allowedOrigins) != null) {
-//                exchange.getResponseHeaders().addAll(ACCESS_CONTROL_ALLOW_ORIGIN, requestHeaders.get(Headers.ORIGIN));
+               exchange.getResponseHeaders().addAll(ACCESS_CONTROL_ALLOW_ORIGIN, requestHeaders.get(Headers.ORIGIN));
 //                exchange.getResponseHeaders().add(Headers.VARY, Headers.ORIGIN_STRING);
 //            }
         }
